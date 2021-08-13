@@ -1,10 +1,10 @@
-!/bin/zsh
+# !/bin/zsh
 
 # This is the bare minimum to run in development. For full list of flags,
 # run ./vigilate -help
 
 go build -o Server-Monitoring-Tool-in-Go cmd/web/*.go && ./Server-Monitoring-Tool-in-Go \
--dbuser='petros' \
+-dbuser='postgres' \
 -pusherHost='localhost' \
 -pusherKey='abc123' \
 -pusherSecret='123abc' \
