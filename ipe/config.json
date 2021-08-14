@@ -6,14 +6,14 @@
 	"SSLCertFile": "cert.pem",
 	"Apps": [
 		{
-			"ApplicationDisabled": true,
+			"ApplicationDisabled": false,
 			"Secret": "abc123",
 			"Key": "123abc",
 			"OnlySSL": false,
 			"Name": "App",
 			"AppID": "1",
 			"UserEvents": true,
-			"WebHooks": true,
+			"WebHooks": false,
 			"URLWebHook": "http://127.0.0.1:5000/hook"
 		}
 	]
