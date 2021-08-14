@@ -7,8 +7,8 @@
 	"Apps": [
 		{
 			"ApplicationDisabled": false,
-			"Secret": "abc123",
-			"Key": "123abc",
+			"Secret": "123abc",
+			"Key": "abc123",
 			"OnlySSL": false,
 			"Name": "App",
 			"AppID": "1",

@@ -44,7 +44,7 @@ func main() {
 
 	// print info
 	log.Printf("******************************************")
-	log.Printf("** %sMinasai%s v%s built in %s", "\033[31m", "\033[0m", vigilateVersion, runtime.Version())
+	log.Printf("** %s見なさい%s v%s built in %s", "\033[31m", "\033[0m", vigilateVersion, runtime.Version())
 	log.Printf("**----------------------------------------")
 	log.Printf("** Running with %d Processors", runtime.NumCPU())
 	log.Printf("** Running on %s", runtime.GOOS)
