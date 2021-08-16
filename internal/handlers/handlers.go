@@ -128,8 +128,20 @@ func (repo *DBRepo) AllHosts(w http.ResponseWriter, r *http.Request) {
 
 // Host shows the host add/edit form
 func (repo *DBRepo) Host(w http.ResponseWriter, r *http.Request) {
-	err := helpers.RenderPage(w, r, "host", nil, nil)
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
+		printTemplateError(w, err)
+	}
+
+	var h models.Host
+	if id > 0 {
+		// get the host from DB
+	}
+
+	vars := make(jet.VarMap)
+	vars.Set("host", h)
+
+	if err := helpers.RenderPage(w, r, "host", vars, nil); err != nil {
 		printTemplateError(w, err)
 	}
 }
