@@ -76,8 +76,8 @@ func (m *postgresDBRepo) UpdateHost(h models.Host) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	stmt := `update hosts set host_name = $1, canonical_name = $2, url = $3, ip = $4, ipv6 = $5, os = $6
-			 active = $7, location = $8 updated_at = $9 where id = $10`
+	stmt := `update hosts set host_name = $1, canonical_name = $2, url = $3, ip = $4, ipv6 = $5, os = $6,
+			 active = $7, location = $8, updated_at = $9 where id = $10`
 
 	if _, err := m.DB.ExecContext(ctx, stmt,
 		h.HostName,
