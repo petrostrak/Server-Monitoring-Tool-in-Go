@@ -44,6 +44,22 @@
             </thead>
             <tbody>
 
+                {{range hosts}}
+                    <tr>
+                        <td><a href="/admin/host/{{.ID}}">{{.HostName}}</a></td>
+                        <td>{{.HostName}}</td>
+                        <td>{{.OS}}</td>
+                        <td>{{.Location}}</td>
+                        <td>
+                            {{if .Active == 1}}
+                                <span class="text-success">Success</span>
+                            {{else}}
+                                <span class="text-danger">Danger</span>
+                            {{end}}
+                        </td>
+                    </tr>
+                {{end}}
+
             </tbody>
         </table>
     </div>
