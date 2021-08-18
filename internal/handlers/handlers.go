@@ -361,6 +361,9 @@ func (repo *DBRepo) ToggleServiceForHost(w http.ResponseWriter, r *http.Request)
 		log.Println(err)
 	}
 
+	var resp serviceJSON
+	resp.OK = true
+
 	hostID, err := strconv.Atoi(r.Form.Get("host_id"))
 	if err != nil {
 		log.Println(err)
@@ -376,10 +379,12 @@ func (repo *DBRepo) ToggleServiceForHost(w http.ResponseWriter, r *http.Request)
 		log.Println(err)
 	}
 
-	fmt.Println(hostID, serviceID, active)
+	log.Println(hostID, serviceID, active)
 
-	var resp serviceJSON
-	resp.OK = true
+	if err = repo.DB.UpdateHostServiceStatus(hostID, serviceID, active); err != nil {
+		log.Println(err)
+		resp.OK = false
+	}
 
 	out, err := json.MarshalIndent(resp, "", "  ")
 	if err != nil {

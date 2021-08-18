@@ -152,3 +152,17 @@ func (m *postgresDBRepo) AllHosts() ([]models.Host, error) {
 
 	return hosts, nil
 }
+
+// UpdateHostServiceStatus updates the active status of a host service
+func (m *postgresDBRepo) UpdateHostServiceStatus(hostID, serviceID, active int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	stmt := `update host_services set active = $1 where host_id = $2 and service_id = $3`
+
+	if _, err := m.DB.ExecContext(ctx, stmt, active, hostID, serviceID); err != nil {
+		return err
+	}
+
+	return nil
+}
