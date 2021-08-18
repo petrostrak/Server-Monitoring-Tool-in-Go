@@ -165,18 +165,16 @@ func (repo *DBRepo) Host(w http.ResponseWriter, r *http.Request) {
 
 // Posthost handles posting of host form
 func (repo *DBRepo) PostHost(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		printTemplateError(w, err)
-	}
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 
 	var h models.Host
 
 	if id > 0 {
-		// get the host from DB
+		// get the host from the database
 		host, err := repo.DB.GetHostByID(id)
 		if err != nil {
-			printTemplateError(w, err)
+			log.Println(err)
+			return
 		}
 		h = host
 	}
@@ -188,21 +186,21 @@ func (repo *DBRepo) PostHost(w http.ResponseWriter, r *http.Request) {
 	h.IPv6 = r.Form.Get("ipv6")
 	h.Location = r.Form.Get("location")
 	h.OS = r.Form.Get("os")
-	active, err := strconv.Atoi(r.Form.Get("active"))
-	if err != nil {
-		log.Println(err)
-	}
+	active, _ := strconv.Atoi(r.Form.Get("active"))
 	h.Active = active
 
 	if id > 0 {
-		if err := repo.DB.UpdateHost(h); err != nil {
+		err := repo.DB.UpdateHost(h)
+		if err != nil {
 			log.Println(err)
+			return
 		}
 	} else {
 		newID, err := repo.DB.InsertHost(h)
 		if err != nil {
 			log.Println(err)
 			helpers.ServerError(w, r, err)
+			return
 		}
 		h.ID = newID
 	}
