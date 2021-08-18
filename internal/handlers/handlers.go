@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -353,6 +354,39 @@ func printTemplateError(w http.ResponseWriter, err error) {
 	_, _ = fmt.Fprint(w, fmt.Sprintf(`<small><span class='text-danger'>Error executing template: %s</span></small>`, err))
 }
 
-func (repo *DBRepo) ToggleServiceForHost(w http.ResponseWriter, r *http.Request) {
+type serviceJSON struct {
+	OK bool `json:"ok"`
+}
 
+func (repo *DBRepo) ToggleServiceForHost(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Println(err)
+	}
+
+	hostID, err := strconv.Atoi(r.Form.Get("host_id"))
+	if err != nil {
+		log.Println(err)
+	}
+
+	serviceID, err := strconv.Atoi(r.Form.Get("service_id"))
+	if err != nil {
+		log.Println(err)
+	}
+
+	active, err := strconv.Atoi(r.Form.Get("active"))
+	if err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(hostID, serviceID, active)
+
+	var resp serviceJSON
+	resp.OK = true
+
+	out, err := json.MarshalIndent(resp, "", "  ")
+	if err != nil {
+		log.Println(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(out)
 }
