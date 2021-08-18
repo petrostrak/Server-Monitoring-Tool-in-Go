@@ -14,7 +14,8 @@ func (m *postgresDBRepo) InsertHost(h models.Host) (int, error) {
 	defer cancel()
 
 	query := `insert into hosts (host_name, canonical_name, url, ip, ipv6, location, os, active, created_at, updated_at)
-			  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id`
+				values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id`
+
 	var newID int
 
 	err := m.DB.QueryRowContext(ctx, query,
@@ -32,6 +33,16 @@ func (m *postgresDBRepo) InsertHost(h models.Host) (int, error) {
 
 	if err != nil {
 		log.Println(err)
+		return newID, err
+	}
+
+	// add host services and set to inactive
+	stmt := `
+		insert into host_services (host_id, service_id, active, schedule_number, schedule_unit,
+		status, created_at, updated_at) values ($1, 1, 0, 3, 'm', 'pending', $2, $3)`
+
+	_, err = m.DB.ExecContext(ctx, stmt, newID, time.Now(), time.Now())
+	if err != nil {
 		return newID, err
 	}
 
