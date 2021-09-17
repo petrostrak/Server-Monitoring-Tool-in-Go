@@ -233,6 +233,7 @@ func (m *postgresDBRepo) AllHosts() ([]models.Host, error) {
 				return nil, err
 			}
 			hostServices = append(hostServices, hs)
+			serviceRows.Close()
 		}
 
 		h.HostServices = hostServices
