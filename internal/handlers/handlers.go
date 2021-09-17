@@ -44,11 +44,17 @@ func NewPostgresqlHandlers(db *driver.DB, a *config.AppConfig) *DBRepo {
 
 // AdminDashboard displays the dashboard
 func (repo *DBRepo) AdminDashboard(w http.ResponseWriter, r *http.Request) {
+	pendic, health, warning, problem, err := repo.DB.GetAllServiceStatusCounts()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	vars := make(jet.VarMap)
-	vars.Set("no_healthy", 0)
-	vars.Set("no_problem", 0)
-	vars.Set("no_pending", 0)
-	vars.Set("no_warning", 0)
+	vars.Set("no_healthy", health)
+	vars.Set("no_problem", problem)
+	vars.Set("no_pending", pendic)
+	vars.Set("no_warning", warning)
 
 	allHosts, err := repo.DB.AllHosts()
 	if err != nil {
