@@ -14,11 +14,15 @@ import (
 )
 
 const (
-	HTTP           = 1
-	HTTPS          = 2
+	// HTTP is the unencrypted web service check
+	HTTP = 1
+	// HTTPS is the encrypted web service check
+	HTTPS = 2
+	// SSLCertificate is ssl certificate check
 	SSLCertificate = 3
 )
 
+// jsonResp describes the JSON response sent back to client
 type jsonResp struct {
 	OK            bool      `json:"ok"`
 	Message       string    `json:"message"`
@@ -43,7 +47,7 @@ func (repo *DBRepo) TestCheck(w http.ResponseWriter, r *http.Request) {
 		okay = false
 	}
 
-	// get host?
+	// get host
 	h, err := repo.DB.GetHostByID(hs.HostID)
 	if err != nil {
 		log.Println(err)
@@ -53,7 +57,16 @@ func (repo *DBRepo) TestCheck(w http.ResponseWriter, r *http.Request) {
 	// test the service
 	newStatus, msg := repo.testServiceForHost(h, hs)
 
-	// update the host service in DB with status (if changed) and last check
+	// update the host service in the database with status (if changed) and last check
+	hs.Status = newStatus
+	hs.LastCheck = time.Now()
+	hs.UpdatedAt = time.Now()
+
+	err = repo.DB.UpdateHostService(hs)
+	if err != nil {
+		log.Println(err)
+		okay = false
+	}
 
 	// broadcast service status changed event
 
@@ -77,30 +90,30 @@ func (repo *DBRepo) TestCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send json to client
-
 	out, _ := json.MarshalIndent(resp, "", "    ")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
 }
 
+// testServiceForHost tests a service for a host
 func (repo *DBRepo) testServiceForHost(h models.Host, hs models.HostService) (string, string) {
 	var msg, newStatus string
 
 	switch hs.ServiceID {
 	case HTTP:
 		msg, newStatus = testHTTPForHost(h.URL)
-		break
 	}
 
 	return newStatus, msg
 }
 
+// testHTTPForHost tests HTTP service
 func testHTTPForHost(url string) (string, string) {
 	if strings.HasSuffix(url, "/") {
 		url = strings.TrimSuffix(url, "/")
 	}
 
-	url = strings.Replace(url, "https://", "https://", -1)
+	url = strings.Replace(url, "https://", "http://", -1)
 
 	resp, err := http.Get(url)
 	if err != nil {
