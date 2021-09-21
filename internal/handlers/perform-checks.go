@@ -2,12 +2,21 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/petrostrak/Server-Monitoring-Tool-in-Go/internal/models"
+)
+
+const (
+	HTTP           = 1
+	HTTPS          = 2
+	SSLCertificate = 3
 )
 
 type jsonResp struct {
@@ -38,9 +47,15 @@ func (repo *DBRepo) TestCheck(w http.ResponseWriter, r *http.Request) {
 	log.Println("Service name is", hs.Service.ServiceName)
 
 	// get host?
+	h, err := repo.DB.GetHostByID(hs.HostID)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	// test the service
-
+	newStatus, msg := repo.testServiceForHost(h, hs)
+	log.Println(newStatus, msg)
 	// create json
 
 	// send json to client
@@ -52,4 +67,36 @@ func (repo *DBRepo) TestCheck(w http.ResponseWriter, r *http.Request) {
 	out, _ := json.MarshalIndent(resp, "", "    ")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
+}
+
+func (repo *DBRepo) testServiceForHost(h models.Host, hs models.HostService) (string, string) {
+	var msg, newStatus string
+
+	switch hs.ServiceID {
+	case HTTP:
+		msg, newStatus = testHTTPForHost(h.URL)
+		break
+	}
+
+	return newStatus, msg
+}
+
+func testHTTPForHost(url string) (string, string) {
+	if strings.HasSuffix(url, "/") {
+		url = strings.TrimSuffix(url, "/")
+	}
+
+	url = strings.Replace(url, "https://", "https://", -1)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Sprintf("%s - %s", url, "error connecting"), "problem"
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Sprintf("%s - %s", url, resp.Status), "problem"
+	}
+
+	return fmt.Sprintf("%s - %s", url, resp.Status), "healthy"
 }
