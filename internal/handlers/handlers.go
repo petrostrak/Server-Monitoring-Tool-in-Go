@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/CloudyKit/jet/v6"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/petrostrak/Server-Monitoring-Tool-in-Go/internal/config"
 	"github.com/petrostrak/Server-Monitoring-Tool-in-Go/internal/driver"
 	"github.com/petrostrak/Server-Monitoring-Tool-in-Go/internal/helpers"
