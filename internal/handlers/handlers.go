@@ -44,16 +44,16 @@ func NewPostgresqlHandlers(db *driver.DB, a *config.AppConfig) *DBRepo {
 
 // AdminDashboard displays the dashboard
 func (repo *DBRepo) AdminDashboard(w http.ResponseWriter, r *http.Request) {
-	pendic, health, warning, problem, err := repo.DB.GetAllServiceStatusCounts()
+	pending, healthy, warning, problem, err := repo.DB.GetAllServiceStatusCounts()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
 	vars := make(jet.VarMap)
-	vars.Set("no_healthy", health)
+	vars.Set("no_healthy", healthy)
 	vars.Set("no_problem", problem)
-	vars.Set("no_pending", pendic)
+	vars.Set("no_pending", pending)
 	vars.Set("no_warning", warning)
 
 	allHosts, err := repo.DB.AllHosts()
@@ -134,13 +134,14 @@ func (repo *DBRepo) PostSettings(w http.ResponseWriter, r *http.Request) {
 
 // AllHosts displays list of all hosts
 func (repo *DBRepo) AllHosts(w http.ResponseWriter, r *http.Request) {
-	// get all hosts from the DB
+	// get all hosts from database
 	hosts, err := repo.DB.AllHosts()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
+	// send data to template
 	vars := make(jet.VarMap)
 	vars.Set("hosts", hosts)
 
@@ -152,14 +153,12 @@ func (repo *DBRepo) AllHosts(w http.ResponseWriter, r *http.Request) {
 
 // Host shows the host add/edit form
 func (repo *DBRepo) Host(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		printTemplateError(w, err)
-	}
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 
 	var h models.Host
+
 	if id > 0 {
-		// get the host from DB
+		// get the host from the database
 		host, err := repo.DB.GetHostByID(id)
 		if err != nil {
 			log.Println(err)
@@ -176,7 +175,7 @@ func (repo *DBRepo) Host(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Posthost handles posting of host form
+// PostHost handles posting of host form
 func (repo *DBRepo) PostHost(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 
@@ -369,40 +368,40 @@ type serviceJSON struct {
 	OK bool `json:"ok"`
 }
 
+// ToggleServiceForHost turns a host service on or off (active or inactive)
 func (repo *DBRepo) ToggleServiceForHost(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
+	err := r.ParseForm()
+	if err != nil {
 		log.Println(err)
 	}
 
 	var resp serviceJSON
 	resp.OK = true
 
-	hostID, err := strconv.Atoi(r.Form.Get("host_id"))
+	hostID, _ := strconv.Atoi(r.Form.Get("host_id"))
+	serviceID, _ := strconv.Atoi(r.Form.Get("service_id"))
+	active, _ := strconv.Atoi(r.Form.Get("active"))
+
+	err = repo.DB.UpdateHostServiceStatus(hostID, serviceID, active)
 	if err != nil {
-		log.Println(err)
-	}
-
-	serviceID, err := strconv.Atoi(r.Form.Get("service_id"))
-	if err != nil {
-		log.Println(err)
-	}
-
-	active, err := strconv.Atoi(r.Form.Get("active"))
-	if err != nil {
-		log.Println(err)
-	}
-
-	log.Println(hostID, serviceID, active)
-
-	if err = repo.DB.UpdateHostServiceStatus(hostID, serviceID, active); err != nil {
 		log.Println(err)
 		resp.OK = false
 	}
 
-	out, err := json.MarshalIndent(resp, "", "  ")
-	if err != nil {
-		log.Println(err)
-	}
+	out, _ := json.MarshalIndent(resp, "", "    ")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
+}
+
+// SetSystemPref sets a given system preference to supplied value, and returns JSON response
+func (repo *DBRepo) SetSystemPref(w http.ResponseWriter, r *http.Request) {
+	var resp jsonResp
+	resp.OK = true
+	resp.Message = ""
+
+	out, _ := json.MarshalIndent(resp, "", "   ")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(out)
+
 }

@@ -25,6 +25,7 @@ func routes() http.Handler {
 
 	mux.Get("/pusher-test", handlers.Repo.TestPusher)
 
+	// our pusher routes
 	mux.Route("/pusher", func(mux chi.Router) {
 		mux.Use(Auth)
 		mux.Post("/auth", handlers.Repo.PusherAuth)
@@ -59,6 +60,9 @@ func routes() http.Handler {
 
 		// schedule
 		mux.Get("/schedule", handlers.Repo.ListEntries)
+
+		// preferences
+		mux.Post("/preference/ajax/set-system-pref", handlers.Repo.SetSystemPref)
 
 		// hosts
 		mux.Get("/host/all", handlers.Repo.AllHosts)
