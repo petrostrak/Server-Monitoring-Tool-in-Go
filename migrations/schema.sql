@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.4 (Debian 13.4-1.pgdg110+1)
--- Dumped by pg_dump version 13.4 (Debian 13.4-1.pgdg110+1)
+-- Dumped from database version 12.8 (Ubuntu 12.8-0ubuntu0.20.04.1)
+-- Dumped by pg_dump version 12.8 (Ubuntu 12.8-0ubuntu0.20.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -45,9 +45,9 @@ CREATE TABLE public.host_services (
     host_id integer NOT NULL,
     service_id integer NOT NULL,
     active integer DEFAULT 1 NOT NULL,
-    "schedule_number" integer DEFAULT 3 NOT NULL,
-    "schedule_unit" character varying(255) DEFAULT 'm'::character varying NOT NULL,
-    "last_check" timestamp without time zone DEFAULT '0001-01-01 00:00:01'::timestamp without time zone NOT NULL,
+    schedule_number integer DEFAULT 3 NOT NULL,
+    schedule_unit character varying(255) DEFAULT 'm'::character varying NOT NULL,
+    last_check timestamp without time zone DEFAULT '0001-01-01 00:00:01'::timestamp without time zone NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     status character varying(255) DEFAULT 'pending'::character varying NOT NULL
@@ -412,10 +412,10 @@ CREATE INDEX sessions_expiry_idx ON public.sessions USING btree (expiry);
 
 
 --
--- Name: services host_services; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: host_services set_timestamp; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER host_services BEFORE UPDATE ON public.services FOR EACH ROW EXECUTE FUNCTION public.trigger_set_timestamp();
+CREATE TRIGGER set_timestamp BEFORE UPDATE ON public.host_services FOR EACH ROW EXECUTE FUNCTION public.trigger_set_timestamp();
 
 
 --
