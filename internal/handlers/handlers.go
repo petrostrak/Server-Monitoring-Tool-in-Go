@@ -249,13 +249,11 @@ func (repo *DBRepo) OneUser(w http.ResponseWriter, r *http.Request) {
 	vars := make(jet.VarMap)
 
 	if id > 0 {
-
 		u, err := repo.DB.GetUserById(id)
 		if err != nil {
 			ClientError(w, r, http.StatusBadRequest)
 			return
 		}
-
 		vars.Set("user", u)
 	} else {
 		var u models.User
@@ -388,6 +386,19 @@ func (repo *DBRepo) ToggleServiceForHost(w http.ResponseWriter, r *http.Request)
 		resp.OK = false
 	}
 
+	// broadcast
+	hs, _ := repo.DB.GetHostServiceByHostIDServiceID(hostID, serviceID)
+	h, _ := repo.DB.GetHostByID(hostID)
+
+	// add or remove from schedule
+	if active == 1 {
+		repo.pushScheduleChangedEvent(hs, "pending")
+		repo.pushStatusChangedEvent(h, hs, "pending")
+		repo.addToMonitorMap(hs)
+	} else {
+		repo.removeFromMonitorMap(hs)
+	}
+
 	out, _ := json.MarshalIndent(resp, "", "    ")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
@@ -420,20 +431,17 @@ func (repo *DBRepo) SetSystemPref(w http.ResponseWriter, r *http.Request) {
 // ToggleMonitoring turns monitoring on and off
 func (repo *DBRepo) ToggleMonitoring(w http.ResponseWriter, r *http.Request) {
 	enabled := r.PostForm.Get("enabled")
-	log.Println(enabled)
 
 	if enabled == "1" {
 		// start monitoring
-		log.Println("Turning monitoring on")
 		repo.App.PreferenceMap["monitoring_live"] = "1"
 		repo.StartMonitoring()
 		repo.App.Scheduler.Start()
 	} else {
 		// stop monitoring
-		log.Println("Turning monitoring off")
 		repo.App.PreferenceMap["monitoring_live"] = "0"
 
-		// remove all items in map from scheduler
+		// remove all items in map from schedule
 		for _, x := range repo.App.MonitorMap {
 			repo.App.Scheduler.Remove(x)
 		}
@@ -443,7 +451,7 @@ func (repo *DBRepo) ToggleMonitoring(w http.ResponseWriter, r *http.Request) {
 			delete(repo.App.MonitorMap, k)
 		}
 
-		// delete all entries from scheduler
+		// delete all entries from schedule, to be sure
 		for _, i := range repo.App.Scheduler.Entries() {
 			repo.App.Scheduler.Remove(i.ID)
 		}
@@ -456,6 +464,7 @@ func (repo *DBRepo) ToggleMonitoring(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
+
 	}
 
 	var resp jsonResp
