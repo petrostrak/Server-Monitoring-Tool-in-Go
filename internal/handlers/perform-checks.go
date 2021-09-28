@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,6 +11,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/petrostrak/Server-Monitoring-Tool-in-Go/internal/channeldata"
+	"github.com/petrostrak/Server-Monitoring-Tool-in-Go/internal/helpers"
 	"github.com/petrostrak/Server-Monitoring-Tool-in-Go/internal/models"
 )
 
@@ -177,6 +180,7 @@ func (repo *DBRepo) testServiceForHost(h models.Host, hs models.HostService) (st
 	switch hs.ServiceID {
 	case HTTP:
 		msg, newStatus = testHTTPForHost(h.URL)
+		break
 	}
 
 	// broadcast to clients if appropriate
@@ -198,11 +202,36 @@ func (repo *DBRepo) testServiceForHost(h models.Host, hs models.HostService) (st
 		if err != nil {
 			log.Println(err)
 		}
+
+		// send email if appropriate
+		if repo.App.PreferenceMap["notify_via_email"] == "1" {
+			if hs.Status != "pending" {
+				mm := channeldata.MailData{
+					ToName:    repo.App.PreferenceMap["notify_name"],
+					ToAddress: repo.App.PreferenceMap["notify_email"],
+				}
+
+				if newStatus == "healthy" {
+					mm.Subject = fmt.Sprintf("HEALTHY: service %s on %s", hs.Service.ServiceName, hs.HostName)
+					mm.Content = template.HTML(fmt.Sprintf(`<p>Service %s on %s reported healthy status</p>
+						<p><strong>Message received: %s</strong>/p>`, hs.Service.ServiceName, hs.HostName, msg))
+				} else if newStatus == "problem" {
+					mm.Subject = fmt.Sprintf("PROBLEM: service %s on %s", hs.Service.ServiceName, hs.HostName)
+					mm.Content = template.HTML(fmt.Sprintf(`<p>Service %s on %s reported problem</p>
+						<p><strong>Message received: %s</strong></p>`, hs.Service.ServiceName, hs.HostName, msg))
+				} else if newStatus == "warning" {
+
+				}
+
+				helpers.SendEmail(mm)
+
+			}
+		}
+
+		// TODO send sms if appropriate
 	}
 
 	repo.pushScheduleChangedEvent(hs, newStatus)
-
-	// TODO - send email/sms if appropriate
 
 	return newStatus, msg
 }
