@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -9,12 +10,14 @@ import (
 	"github.com/pusher/pusher-http-go"
 )
 
+// PusherAuth authenticates the user to our pusher server
 func (repo *DBRepo) PusherAuth(w http.ResponseWriter, r *http.Request) {
 	userID := repo.App.Session.GetInt(r.Context(), "userID")
 
 	u, _ := repo.DB.GetUserById(userID)
 
 	params, _ := io.ReadAll(r.Body)
+
 	presenceData := pusher.MemberData{
 		UserID: strconv.Itoa(userID),
 		UserInfo: map[string]string{
@@ -30,5 +33,16 @@ func (repo *DBRepo) PusherAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(response)
+	_, _ = w.Write(response)
+}
+
+// SendPrivateMessage is sample code for sending to private channel
+func (repo *DBRepo) SendPrivateMessage(w http.ResponseWriter, r *http.Request) {
+	msg := r.URL.Query().Get("msg")
+	id := r.URL.Query().Get("id")
+
+	data := make(map[string]string)
+	data["message"] = msg
+
+	_ = repo.App.WsClient.Trigger(fmt.Sprintf("private-channel-%s", id), "private-message", data)
 }
